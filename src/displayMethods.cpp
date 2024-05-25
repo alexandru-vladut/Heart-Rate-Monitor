@@ -61,34 +61,46 @@ void displayMonitoringText(int BPM) {
   lcd.print("Press to STOP");
 }
 
-void displayStats(int averageBPM, unsigned long monitoringDuration) {
+void displayStats(int averageBPM, int maxBPM, unsigned long monitoringDuration) {
   lcd.clear();
-  displayAverageBPM(averageBPM);
+  displayBPM(averageBPM, maxBPM);
   displayDuration(monitoringDuration);
-  lcd.setCursor(6, 3);
-  lcd.print("Press to RESET");
+  displayMessage(averageBPM);
 }
 
-void displayAverageBPM(int averageBPM) {
+void displayBPM(int averageBPM, int maxBPM) {
   lcd.setCursor(0, 0);
-  lcd.print("Average BPM - ");
+  lcd.print("BPM: Avg ");
   lcd.print(averageBPM);
+  lcd.print(", Max ");
+  lcd.print(maxBPM);
 }
 
 void displayDuration(unsigned long monitoringDuration) {
 
-  int hours = monitoringDuration / 3600;
   int minutes = monitoringDuration / 60;
   int seconds = monitoringDuration % 60;
 
   lcd.setCursor(0, 1);
-  lcd.print("Duration - ");
-  lcd.print(hours < 10 ? "0" : "");
-  lcd.print(hours);
-  lcd.print(":");
+  lcd.print("Duration: ");
   lcd.print(minutes < 10 ? "0" : "");
   lcd.print(minutes);
   lcd.print(":");
   lcd.print(seconds < 10 ? "0" : "");
   lcd.print(seconds);
+}
+
+void displayMessage(int averageBPM) {
+  lcd.setCursor(0, 3);
+  if (averageBPM < 60) {
+    lcd.print("Slow and steady!");
+  } else if (averageBPM <= 65) {
+    lcd.print("Chilly vibes!");
+  } else if (averageBPM <= 75) {
+    lcd.print("All good!");
+  } else if (averageBPM <= 80) {
+    lcd.print("Take it easy!");
+  } else {
+    lcd.print("Slow down!");
+  }
 }

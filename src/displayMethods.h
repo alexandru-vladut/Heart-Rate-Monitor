@@ -12,8 +12,9 @@ void displayNoFingerDetectedText();
 void displayWarmingUpText();
 void displayMonitoringText(int BPM);
 
-void displayStats(int averageBPM, unsigned long monitoringDuration);
-void displayAverageBPM(int averageBPM);
+void displayStats(int averageBPM, int maxBPM, unsigned long monitoringDuration);
+void displayBPM(int averageBPM, int maxBPM);
 void displayDuration(unsigned long monitoringDuration);
+void displayMessage(int averageBPM);
 
 #endif

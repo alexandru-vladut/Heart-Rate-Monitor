@@ -22,7 +22,7 @@ bool isWarmingUp = false;
 bool lastFingerDetected = false;
 bool fingerDetected = false;
 
-const byte ARRAY_SIZE = 6; // Increase this for more averaging
+const byte ARRAY_SIZE = 4; // Increase this for more averaging
 byte rawBPMs[ARRAY_SIZE]; // Array of heart rates
 byte index = 0;
 long lastBeat = 0; // Time at which the last beat occurred
@@ -31,6 +31,7 @@ int displayedBPM;
 
 int beatCount = 0;  // Count of beats detected
 int totalBPM = 0;   // Total of BPMs collected
+int maxBPM = 0;
 
 int beatCountAux = 0;
 
@@ -67,6 +68,7 @@ void setup() {
   pulseSensor.setup(); //Configure sensor with default settings
   pulseSensor.setPulseAmplitudeRed(0x0A); //Turn Red LED to low to indicate sensor is running
   pulseSensor.setPulseAmplitudeGreen(0);  // Turn off Green LED
+  pulseSensor.shutDown();
 
   // Start in idle state
   displayInitialText();
@@ -84,8 +86,11 @@ void loop() {
       Serial.println("START");
       Serial.println("---------------------------------------------");
 
+      setColor(255, 255, 255);
+      pulseSensor.wakeUp();
       beatCount = 0;  // Reset beat count
       totalBPM = 0;   // Reset total BPM
+      maxBPM = 0;
       startTime = millis();  // Record start time
 
       beatCountAux = 0;
@@ -101,7 +106,7 @@ void loop() {
       Serial.println("STOP");
       Serial.println();
 
-      analogWrite(RED_PIN, 255); // Turn off LED
+      pulseSensor.shutDown();
       computeStats();
 
     }
@@ -159,7 +164,7 @@ void monitorHeartbeat() {
       Serial.print("Raw BPM: ");
       Serial.print(rawBPM);
 
-      if (rawBPM > 50 && rawBPM < 100) { // if rawBPM is accurate
+      if (rawBPM > 45 && rawBPM < 100) { // if rawBPM is accurate
 
         Serial.println(" (CONSIDERED)");
 
@@ -169,6 +174,9 @@ void monitorHeartbeat() {
           // Compute final stats
           totalBPM += displayedBPM;
           beatCount++;
+          if (displayedBPM > maxBPM) {
+            maxBPM = displayedBPM;
+          }
         }
 
         beatCountAux++;
@@ -188,11 +196,12 @@ void monitorHeartbeat() {
         Serial.println(displayedBPM);
 
         displayMonitoringText(displayedBPM);
-        blinkLED();
 
       } else {
         Serial.println("Heartbeat detected, warming up...");
       }
+
+      blinkLED();
 
       Serial.println("---------------------------------------------");
       
@@ -208,6 +217,7 @@ void monitorHeartbeat() {
 float getBPM() {
   long delta = millis() - lastBeat;
   lastBeat = millis();
+
   return 60 / (delta / 1000.0);
 }
 
@@ -235,16 +245,35 @@ void blinkLED() {
 }
 
 void computeStats() {
-
   if (beatCount > 0) {
 
     int averageBPM = totalBPM / beatCount;
     monitoringDuration = (millis() - startTime) / 1000;
 
-    displayStats(averageBPM, monitoringDuration);
+    turnLedOn(averageBPM);
+    displayStats(averageBPM, maxBPM, monitoringDuration);
 
   } else {
     displayErrorText();
   }
-  
+}
+
+void turnLedOn(int averageBPM) {
+  if (averageBPM < 60) {
+    setColor(0, 255, 0); // Purple
+  } else if (averageBPM <= 65) {
+    setColor(255, 255, 0); // Blue
+  } else if (averageBPM <= 75) {
+    setColor(255, 0, 255); // Green
+  } else if (averageBPM <= 80) {
+    setColor(0, 0, 255); // Yellow
+  } else {
+    setColor(0, 255, 255); // Red
+  }
+}
+
+void setColor(int red, int green, int blue) {
+  analogWrite(RED_PIN, red);
+  analogWrite(GREEN_PIN, green);
+  analogWrite(BLUE_PIN, blue);
 }
